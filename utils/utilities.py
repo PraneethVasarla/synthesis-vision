@@ -66,3 +66,10 @@ def start_container(container_name):
 
 def download_file(url, destination_path):
     subprocess.run(["wget", url, "-O", destination_path])
+
+def get_subfolders(directory):
+    subfolders = []
+    for root, dirs, files in os.walk(directory):
+        for dir in dirs:
+            subfolders.append(os.path.join(root, dir))
+    return subfolders

@@ -17,7 +17,7 @@ else:
     collection_name = "synthesis_vision"
 
 if not check_container_exists(container_name):
-    compose_path = os.path.join("milvus","docker-compose.yml")
+    compose_path = os.path.join("", "docker-compose.yml")
     compose_url = "https://github.com/milvus-io/milvus/releases/download/v2.2.11/milvus-standalone-docker-compose.yml"
     download_file(compose_url,compose_path)
     add_attu_block()

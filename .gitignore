@@ -1,2 +1,4 @@
 /data/images/*
 /milvus/volumes/
+/models/*
+**/*.html
