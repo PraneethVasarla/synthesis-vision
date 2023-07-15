@@ -13,8 +13,8 @@ for link in html.find_all('a'):
         captions = [li.text for li in link.find_next('ul').find_all('li')]
         image_data[image_name] = captions
 
-# Save as flickr30k.json
-with open('flickr30k.json', 'w') as json_file:
+# Save as descriptions.json
+with open('descriptions.json', 'w') as json_file:
     json.dump(image_data, json_file, indent=4)
 
-print("Data saved as flickr30k.json")
+print("Data saved as descriptions.json")

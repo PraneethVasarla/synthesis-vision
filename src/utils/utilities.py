@@ -1,6 +1,8 @@
 import subprocess
 import os
 import yaml
+import tensorflow as tf
+from transformers import TFAutoModel,AutoTokenizer
 
 # Load the existing YAML file
 def add_attu_block():
@@ -73,3 +75,42 @@ def get_subfolders(directory):
         for dir in dirs:
             subfolders.append(os.path.join(root, dir))
     return subfolders
+
+def check_tf_gpu():
+    if tf.config.list_physical_devices('GPU'):
+        # Use CUDA for GPU acceleration
+        os.environ['CUDA_VISIBLE_DEVICES'] = '0'
+        return True
+    else:
+        # Run on CPU
+        os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
+        return False
+
+def load_model(model_name,models_directory='models'):
+    project_directory = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    models_directory = os.path.join(project_directory, models_directory)
+    os.makedirs(models_directory, exist_ok=True)
+
+    subfolders = get_subfolders(models_directory)
+    existing_models = [os.path.basename(path) for path in subfolders]
+
+    model_directory = os.path.join(models_directory, model_name)
+    os.makedirs(model_directory, exist_ok=True)
+
+    gpu = check_tf_gpu()
+    print(f"Using GPU: {gpu}")
+
+    if model_name not in existing_models:
+        model = TFAutoModel.from_pretrained(model_name)
+        tokenizer = AutoTokenizer.from_pretrained(model_name)
+
+        # Save the model and tokenizer to the model-specific directory
+        model.save_pretrained(model_directory)
+        tokenizer.save_pretrained(model_directory)
+
+    else:
+        print("Model already exists. Loading from disk...")
+        model = TFAutoModel.from_pretrained(model_directory)
+        tokenizer = AutoTokenizer.from_pretrained(model_directory)
+
+    return model,tokenizer
