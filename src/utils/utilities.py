@@ -1,6 +1,7 @@
 import subprocess
 import os
 import yaml
+import tensorflow as tf
 
 # Load the existing YAML file
 def add_attu_block():
@@ -73,3 +74,13 @@ def get_subfolders(directory):
         for dir in dirs:
             subfolders.append(os.path.join(root, dir))
     return subfolders
+
+def check_tf_gpu():
+    if tf.config.list_physical_devices('GPU'):
+        # Use CUDA for GPU acceleration
+        os.environ['CUDA_VISIBLE_DEVICES'] = '0'
+        return True
+    else:
+        # Run on CPU
+        os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
+        return False
