@@ -1,14 +1,12 @@
 import os
+import sys
 import torch
 from transformers import BertModel, BertTokenizer, DistilBertModel, DistilBertTokenizer
 
+sys.path.append(os.getcwd())
 
-def get_subfolders(directory):
-    subfolders = []
-    for root, dirs, files in os.walk(directory):
-        for dir in dirs:
-            subfolders.append(os.path.join(root, dir))
-    return subfolders
+from src.utils.utilities import get_subfolders
+
 
 models_directory = "../models"
 subfolders = get_subfolders(models_directory)

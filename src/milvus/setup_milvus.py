@@ -1,11 +1,15 @@
 import subprocess
 import argparse
 import os
+import sys
 
-from utils import check_container_running,check_container_exists,up_docker_compose,start_container,download_file,add_attu_block
+sys.path.append(os.getcwd())
+
+from src.utils import check_container_running,check_container_exists,up_docker_compose,start_container,download_file,add_attu_block
 
 parser = argparse.ArgumentParser(description='Take arguments to run the setup_milvus.py file')
 parser.add_argument('--collection_name',help='Name of the milvus collection/database')
+parser.add_argument('--collection_description',help='Description of milvus collection')
 
 args = parser.parse_args()
 
@@ -16,8 +20,13 @@ if args.collection_name:
 else:
     collection_name = "synthesis_vision"
 
+if args.collection_description:
+    collection_description = args.collection_description
+else:
+    collection_description = "synthesis_vision vector database"
+
 if not check_container_exists(container_name):
-    compose_path = os.path.join("", "docker-compose.yml")
+    compose_path = os.path.join("src", "milvus", "docker-compose.yml")
     compose_url = "https://github.com/milvus-io/milvus/releases/download/v2.2.11/milvus-standalone-docker-compose.yml"
     download_file(compose_url,compose_path)
     add_attu_block()
@@ -53,7 +62,7 @@ fields = [
     FieldSchema(name="embedding", dtype=DataType.FLOAT_VECTOR, dim=768),
     # Add more fields as needed
 ]
-schema = CollectionSchema(fields=fields, description="synthesis-vision vector database")
+schema = CollectionSchema(fields=fields, description=collection_description)
 collection = Collection(collection_name, schema, consistency_level="Strong")
 
 print(f"{collection_name} collection created!")
