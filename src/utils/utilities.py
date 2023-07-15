@@ -4,7 +4,7 @@ import yaml
 
 # Load the existing YAML file
 def add_attu_block():
-    compose_path = os.path.join("milvus", "docker-compose.yml")
+    compose_path = os.path.join("src","milvus", "docker-compose.yml")
     with open(compose_path, "r") as file:
         docker_compose_data = yaml.safe_load(file)
 
@@ -47,7 +47,7 @@ def check_container_running(container_name):
 
 def up_docker_compose(container_name):
     command = f"docker-compose --project-name {container_name} up -d"
-    execute_path = os.path.join("milvus")
+    execute_path = os.path.join("src","milvus")
     result = subprocess.run(command, shell=True, capture_output=True, cwd=execute_path)
     if result.returncode == 0:
         print("Docker container up and running!")
