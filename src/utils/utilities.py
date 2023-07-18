@@ -2,7 +2,7 @@ import subprocess
 import os
 import yaml
 import tensorflow as tf
-from transformers import TFAutoModel,AutoTokenizer
+from transformers import TFAutoModel,AutoTokenizer, ViTModel, ViTImageProcessor
 
 # Load the existing YAML file
 def add_attu_block():
@@ -86,7 +86,7 @@ def check_tf_gpu():
         os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
         return False
 
-def load_model(model_name,models_directory='models'):
+def load_text_model(model_name,models_directory='models',use_cache=True):
     project_directory = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
     models_directory = os.path.join(project_directory, models_directory)
     os.makedirs(models_directory, exist_ok=True)
@@ -94,23 +94,32 @@ def load_model(model_name,models_directory='models'):
     subfolders = get_subfolders(models_directory)
     existing_models = [os.path.basename(path) for path in subfolders]
 
-    model_directory = os.path.join(models_directory, model_name)
-    os.makedirs(model_directory, exist_ok=True)
 
     gpu = check_tf_gpu()
     print(f"Using GPU: {gpu}")
 
-    if model_name not in existing_models:
-        model = TFAutoModel.from_pretrained(model_name)
-        tokenizer = AutoTokenizer.from_pretrained(model_name)
-
-        # Save the model and tokenizer to the model-specific directory
-        model.save_pretrained(model_directory)
-        tokenizer.save_pretrained(model_directory)
-
-    else:
+    if "models--"+model_name in existing_models:
         print("Model already exists. Loading from disk...")
-        model = TFAutoModel.from_pretrained(model_directory)
-        tokenizer = AutoTokenizer.from_pretrained(model_directory)
+
+    model = TFAutoModel.from_pretrained(model_name,cache_dir=models_directory if use_cache else None)
+    tokenizer = AutoTokenizer.from_pretrained(model_name,cache_dir=models_directory if use_cache else None)
 
     return model,tokenizer
+
+def load_vision_model(model_name,models_directory='models',use_cache=True):
+    project_directory = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    models_directory = os.path.join(project_directory, models_directory)
+    os.makedirs(models_directory, exist_ok=True)
+
+    subfolders = get_subfolders(models_directory)
+    existing_models = [os.path.basename(path) for path in subfolders]
+
+    gpu = check_tf_gpu()
+    print(f"Using GPU: {gpu}")
+
+    if "models--"+model_name in existing_models:
+        print("Model already exists. Loading from disk...")
+    model = ViTModel.from_pretrained(model_name,cache_dir=models_directory if use_cache else None)
+    feature_extractor = ViTImageProcessor.from_pretrained(model_name,cache_dir=models_directory if use_cache else None)
+
+    return model,feature_extractor
