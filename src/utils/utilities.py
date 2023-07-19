@@ -114,8 +114,8 @@ def load_vision_model(model_name,models_directory='models',use_cache=True):
     subfolders = get_subfolders(models_directory)
     existing_models = [os.path.basename(path) for path in subfolders]
 
-    gpu = check_tf_gpu()
-    print(f"Using GPU: {gpu}")
+    # gpu = check_tf_gpu()
+    # print(f"Using GPU: {gpu}")
 
     if "models--"+model_name in existing_models:
         print("Model already exists. Loading from disk...")

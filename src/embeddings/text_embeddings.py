@@ -5,7 +5,7 @@ import numpy as np
 import tensorflow as tf
 
 sys.path.append(os.getcwd())
-from tqdm import tqdm
+from tqdm.auto import tqdm
 
 def get_individual_embeddings(sentences,model,tokenizer):
     # Tokenize the input
@@ -38,15 +38,21 @@ def fuse_with_self_attention(embeddings):
 
     return fused_embedding
 
-def get_text_embedding(sentences,model,tokenizer):
+def get_text_embedding(sentences, model, tokenizer):
     batch_fused_embeddings = []
-    for batch in tqdm(sentences):
-        individual_embeddings = get_individual_embeddings(batch,model,tokenizer)
-        fused_embedding = fuse_with_self_attention(individual_embeddings)
-        batch_fused_embeddings.append(fused_embedding)
-        del individual_embeddings
+    # Create a tqdm progress bar for texts
+    with tqdm(total=len(sentences), desc="Text embeddings", dynamic_ncols=True) as progress_bar:
+        for batch in sentences:
+            individual_embeddings = get_individual_embeddings(batch, model, tokenizer)
+            fused_embedding = fuse_with_self_attention(individual_embeddings)
+            batch_fused_embeddings.append(fused_embedding)
+            del individual_embeddings
+            progress_bar.update(1)
+
     batch_fused_embeddings = np.array(batch_fused_embeddings)
     return batch_fused_embeddings
+
+
 
 # Example usage
 
