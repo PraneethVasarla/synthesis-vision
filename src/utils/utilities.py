@@ -123,3 +123,31 @@ def load_vision_model(model_name,models_directory='models',use_cache=True):
     feature_extractor = ViTImageProcessor.from_pretrained(model_name,cache_dir=models_directory if use_cache else None)
 
     return model,feature_extractor
+
+def get_input_text_embedding(text,model,tokenizer):
+    encoded_input = tokenizer.encode_plus(text, padding=True, truncation=True, return_tensors='tf')
+    outputs = model(**encoded_input)
+
+    last_hidden_state = outputs.last_hidden_state
+    sentence_embeddings = tf.reduce_mean(last_hidden_state, axis=1)
+    sentence_embeddings = sentence_embeddings.numpy()
+
+    return sentence_embeddings[0]
+
+def load_images_as_html(image_paths,distances,text_input):
+    """Loads a list of image paths as a normal HTML file in the current directory and opens it in a web browser. The images are aligned linearly in a table with the first column as serial numbers and table lines. The table will fit 60% of the screen and the images will be centered in the image column.
+
+    Args:
+        image_paths (list): A list of image paths.
+    """
+
+    html = ""
+    html += "<table border='1' style='width: 60%'>"
+    html += f"<h3>Search results for: <b>{text_input}</b></h3>"
+    html += "<tr><th>S.No.</th><th style='text-align: center'>Image</th><th>Distance</th></tr>"
+    for i, image in enumerate(zip(image_paths,distances)):
+        html += f'<tr><td>{i + 1}</td><td align="center" padding="15px"><img src="{image[0]}"/></td><td>{image[1]}</td></tr>'
+    html += "</table>"
+
+    with open("images.html", "w") as f:
+        f.write(html)

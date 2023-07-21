@@ -3,3 +3,4 @@
 /src/milvus/docker-compose.yml
 /models/*
 **/*.html
+/data/parse_html_flickr30k_to_json.py
