@@ -3,6 +3,8 @@ import argparse
 import os
 import sys
 
+from pymilvus.client.types import MetricType
+
 sys.path.append(os.getcwd())
 
 from src.utils import check_container_running,check_container_exists,up_docker_compose,start_container,download_file,add_attu_block
@@ -47,7 +49,7 @@ from pymilvus import (
     connections,
     utility,
     FieldSchema, CollectionSchema, DataType,
-    Collection,
+    Collection, IndexType,
 )
 
 connections.connect("default", host="localhost", port="19530")
@@ -59,11 +61,23 @@ print(f"Does collection {collection_name} exist in Milvus: {has}")
 # Define the collection schema
 fields = [
     FieldSchema(name="image_name", dtype=DataType.VARCHAR,is_primary=True,max_length=200),
-    FieldSchema(name="embedding", dtype=DataType.FLOAT_VECTOR, dim=768),
+    FieldSchema(name="fused_embedding", dtype=DataType.FLOAT_VECTOR, dim=768),
     # Add more fields as needed
 ]
+
+index_params = {
+    "index_type": IndexType.HNSW,
+    "metric_type": MetricType.L2,  # Use MetricType.IP for inner product similarity
+    "params": {
+        "M": 16,  # The number of bidirectional links
+        "efConstruction": 500  # The size of the dynamic candidate list during index building
+    }
+}
+
 schema = CollectionSchema(fields=fields, description=collection_description)
 collection = Collection(collection_name, schema, consistency_level="Strong")
+
+collection.create_index(field_name="fused_embedding",index_params=index_params)
 
 print(f"{collection_name} collection created!")
 print("Attu server running...")

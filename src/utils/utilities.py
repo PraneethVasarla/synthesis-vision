@@ -2,7 +2,7 @@ import subprocess
 import os
 import yaml
 import tensorflow as tf
-from transformers import TFAutoModel,AutoTokenizer
+from transformers import TFAutoModel,AutoTokenizer, ViTModel, ViTImageProcessor
 
 # Load the existing YAML file
 def add_attu_block():
@@ -86,7 +86,7 @@ def check_tf_gpu():
         os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
         return False
 
-def load_model(model_name,models_directory='models'):
+def load_text_model(model_name,models_directory='models',use_cache=True):
     project_directory = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
     models_directory = os.path.join(project_directory, models_directory)
     os.makedirs(models_directory, exist_ok=True)
@@ -94,23 +94,60 @@ def load_model(model_name,models_directory='models'):
     subfolders = get_subfolders(models_directory)
     existing_models = [os.path.basename(path) for path in subfolders]
 
-    model_directory = os.path.join(models_directory, model_name)
-    os.makedirs(model_directory, exist_ok=True)
 
     gpu = check_tf_gpu()
     print(f"Using GPU: {gpu}")
 
-    if model_name not in existing_models:
-        model = TFAutoModel.from_pretrained(model_name)
-        tokenizer = AutoTokenizer.from_pretrained(model_name)
-
-        # Save the model and tokenizer to the model-specific directory
-        model.save_pretrained(model_directory)
-        tokenizer.save_pretrained(model_directory)
-
-    else:
+    if "models--"+model_name in existing_models:
         print("Model already exists. Loading from disk...")
-        model = TFAutoModel.from_pretrained(model_directory)
-        tokenizer = AutoTokenizer.from_pretrained(model_directory)
+
+    model = TFAutoModel.from_pretrained(model_name,cache_dir=models_directory if use_cache else None)
+    tokenizer = AutoTokenizer.from_pretrained(model_name,cache_dir=models_directory if use_cache else None)
 
     return model,tokenizer
+
+def load_vision_model(model_name,models_directory='models',use_cache=True):
+    project_directory = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    models_directory = os.path.join(project_directory, models_directory)
+    os.makedirs(models_directory, exist_ok=True)
+
+    subfolders = get_subfolders(models_directory)
+    existing_models = [os.path.basename(path) for path in subfolders]
+
+    # gpu = check_tf_gpu()
+    # print(f"Using GPU: {gpu}")
+
+    if "models--"+model_name in existing_models:
+        print("Model already exists. Loading from disk...")
+    model = ViTModel.from_pretrained(model_name,cache_dir=models_directory if use_cache else None)
+    feature_extractor = ViTImageProcessor.from_pretrained(model_name,cache_dir=models_directory if use_cache else None)
+
+    return model,feature_extractor
+
+def get_input_text_embedding(text,model,tokenizer):
+    encoded_input = tokenizer.encode_plus(text, padding=True, truncation=True, return_tensors='tf')
+    outputs = model(**encoded_input)
+
+    last_hidden_state = outputs.last_hidden_state
+    sentence_embeddings = tf.reduce_mean(last_hidden_state, axis=1)
+    sentence_embeddings = sentence_embeddings.numpy()
+
+    return sentence_embeddings[0]
+
+def load_images_as_html(image_paths,distances,text_input):
+    """Loads a list of image paths as a normal HTML file in the current directory and opens it in a web browser. The images are aligned linearly in a table with the first column as serial numbers and table lines. The table will fit 60% of the screen and the images will be centered in the image column.
+
+    Args:
+        image_paths (list): A list of image paths.
+    """
+
+    html = ""
+    html += "<table border='1' style='width: 60%'>"
+    html += f"<h3>Search results for: <b>{text_input}</b></h3>"
+    html += "<tr><th>S.No.</th><th style='text-align: center'>Image</th><th>Distance</th></tr>"
+    for i, image in enumerate(zip(image_paths,distances)):
+        html += f'<tr><td>{i + 1}</td><td align="center" padding="15px"><img src="{image[0]}"/></td><td>{image[1]}</td></tr>'
+    html += "</table>"
+
+    with open("images.html", "w") as f:
+        f.write(html)
