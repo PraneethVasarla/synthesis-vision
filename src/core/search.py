@@ -9,7 +9,7 @@ from src.utils.utilities import load_text_model,get_input_text_embedding,load_im
 IMAGES_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), '..', 'data', 'images')
 
 connections.connect("default", host="localhost", port="19530")
-collection = Collection("synthesis_vision")      # Get an existing collection.
+collection = Collection("images")      # Get an existing collection.
 print(collection.num_entities)
 collection.load()
 
@@ -17,7 +17,7 @@ text_model_name = 'distilbert-base-uncased'
 
 text_model,tokenizer = load_text_model(text_model_name)
 
-text = "black dog running in water"
+text = "dog running on streets"
 
 embedding = get_input_text_embedding(text,text_model,tokenizer)
 embedding = list(embedding)
@@ -31,12 +31,12 @@ search_params = {
 
 results = collection.search(
 	data=[embedding],
-	anns_field="fused_embedding",
+	anns_field="embedding",
 	param=search_params,
 	limit=20,
 	expr=None,
 	# set the names of the fields you want to retrieve from the search result.
-	output_fields=['image_name'],
+	output_fields=['product_id'],
 	consistency_level="Strong"
 )
 

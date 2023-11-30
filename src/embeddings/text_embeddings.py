@@ -7,17 +7,20 @@ import tensorflow as tf
 sys.path.append(os.getcwd())
 from tqdm.auto import tqdm
 
+def reshape_embedding(embedding):
+    truncated_embeddings = embedding[:, :1] #taking first element from 2nd dimension, keeping 1st n 3rd dims unchanged
+    concatenated_embeddings = tf.concat(truncated_embeddings, axis=1)
+    return concatenated_embeddings
+
 def get_individual_embeddings(sentences,model,tokenizer):
     # Tokenize the input
     encoded_inputs = tokenizer.batch_encode_plus(sentences, padding=True,truncation=True,return_tensors='tf')
-
     # Get the model's output
     outputs = model(**encoded_inputs)
 
     # Get the final hidden state (last layer) from the output
     last_hidden_state = outputs.last_hidden_state
-    sentence_embeddings = tf.reduce_mean(last_hidden_state, axis=1)
-
+    sentence_embeddings = reshape_embedding(last_hidden_state)
     return sentence_embeddings
 
 def fuse_with_self_attention(embeddings):
@@ -32,10 +35,7 @@ def fuse_with_self_attention(embeddings):
 
     # Perform weighted sum of the embeddings using attention weights
     fused_embedding = tf.matmul(attention_weights, embeddings_tensor)
-
-    # Reduce the fused embedding to a single tensor
-    fused_embedding = tf.reduce_mean(fused_embedding, axis=0, keepdims=True)
-
+    fused_embedding = tf.reduce_mean(fused_embedding,axis=0)
     return fused_embedding
 
 def get_text_embedding(sentences, model, tokenizer):
@@ -52,38 +52,43 @@ def get_text_embedding(sentences, model, tokenizer):
     batch_fused_embeddings = np.array(batch_fused_embeddings)
     return batch_fused_embeddings
 
-
-
 # Example usage
+if __name__ == "__main__":
+    from src.utils.utilities import load_text_model
+    model_name = 'distilbert-base-uncased'
+    models_dir = 'models'
 
-# from src.utils.utilities import load_model
-# model_name = 'distilbert-base-uncased'
-# models_dir = 'models'
-#
-# model,tokenizer = load_model(model_name,models_dir)
+    model,tokenizer = load_text_model(model_name,models_dir)
 
-# captions = [[
-#         "Two young guys with shaggy hair look at their hands while hanging out in the yard.",
-#         "Two young, White males are outside near many bushes.",
-#         "Two men in green shirts are standing in a yard.",
-#         "A man in a blue shirt standing in a garden.",
-#         "Two friends enjoy time spent together."
-#     ],
-#     [
-#         "Several men in hard hats are operating a giant pulley system.",
-#         "Workers look down from up above on a piece of equipment.",
-#         "Two men working on a machine wearing hard hats.",
-#         "Four men on top of a tall structure.",
-#         "Three men on a large rig."
-#     ],
-# [
-#         "A child in a pink dress is climbing up a set of stairs in an entry way.",
-#         "A little girl in a pink dress going into a wooden cabin.",
-#         "A little girl climbing the stairs to her playhouse.",
-#         "A little girl climbing into a wooden playhouse.",
-#         "A girl going into a wooden building."
-#     ]
-# ]
-# embeddings = get_text_embedding(captions,model=model,tokenizer=tokenizer)
-# print("Shape of embedding:", embeddings.shape)
-# print(embeddings)
+    captions = [[
+        "two young guy shaggy hair look hand hanging yard",
+        "two young white male outside near many bush",
+        "two men green shirt standing yard",
+        "man blue shirt standing garden",
+        "two friend enjoy time spent together"
+      ],
+        [
+            "several men hard hat operating giant pulley system",
+            "worker look piece equipment",
+            "two men working machine wearing hard hat",
+            "four men top tall structure",
+            "three men large rig"
+        ],
+        [
+        "child pink dress climbing set stair entry way",
+        "little girl pink dress going wooden cabin",
+        "little girl climbing stair playhouse",
+        "little girl climbing wooden playhouse",
+        "girl going wooden building"
+      ],
+        [
+            "two young men young lady walk field near water",
+            "three people walking beautiful meadow towards ocean",
+            "two men woman walking field",
+            "two male one female walking on path",
+            "three people walking on path meadow"
+        ]
+    ]
+
+    embeddings = get_text_embedding(captions,model,tokenizer)
+    print(embeddings.shape)

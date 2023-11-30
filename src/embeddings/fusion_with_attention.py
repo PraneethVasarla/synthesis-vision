@@ -34,3 +34,4 @@ class FusionWithAttention(tf.keras.layers.Layer):
         fused_embedding = self.fusion_linear(fused_embedding)
 
         return fused_embedding
+    

@@ -4,3 +4,7 @@
 /models/*
 **/*.html
 /data/parse_html_flickr30k_to_json.py
+.idea
+src/__pycache__
+src/core/__pycache__
+src/embeddings/__pycache__

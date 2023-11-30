@@ -2,6 +2,7 @@ import subprocess
 import os
 import yaml
 import tensorflow as tf
+import numpy as np
 from transformers import TFAutoModel,AutoTokenizer, ViTModel, ViTImageProcessor
 
 # Load the existing YAML file
@@ -64,7 +65,7 @@ def start_container(container_name):
     if result.returncode == 0:
         return True
     else:
-        raise "Docker compose failed to start the container"
+        raise Exception("Docker compose failed to start the container")
 
 def download_file(url, destination_path):
     subprocess.run(["wget", url, "-O", destination_path])
@@ -151,3 +152,21 @@ def load_images_as_html(image_paths,distances,text_input):
 
     with open("images.html", "w") as f:
         f.write(html)
+
+def normalize_batch_vectors(vectors_list):
+    normalized_vectors = []
+    for vector in vectors_list:
+        magnitude = np.linalg.norm(vector)
+        if magnitude == 0:
+            normalized_vectors.append(vector)
+        else:
+            normalized_vector = vector / magnitude
+            normalized_vectors.append(normalized_vector)
+    return normalized_vectors
+
+def normalize_vector(vector):
+    magnitude = np.linalg.norm(vector)  # Calculate the magnitude of the vector
+    if magnitude == 0:  # Avoid division by zero
+        return vector
+    normalized_vector = vector / magnitude  # Normalize the vector
+    return normalized_vector
